@@ -8,3 +8,34 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+# Install and Load Required Libraries
+```{r}
+options(repos=c(CRAN="https://cran.r-project.org"))
+install.packages("forecast")
+install.packages("readr")
+install.packages("stats")
+install.packages("tseries")
+install.packages("lmtest")
+library(forecast)
+library(readr)
+library(forecast)
+library(stats)
+library(tseries)
+library(lmtest)
+```
+# Read in Demand Data
+```{r}
+data <- read.csv("C:/Users/00815/OneDrive/Desktop/MSU/CIS 663/CIS 663 Project/Demand_per_month.csv")
+data$date <- as.Date(data$date, format = "%Y-%m-%d")
+```
+# Read in Generation Data
+```{r}
+data2 <- read.csv("C:/Users/00815/OneDrive/Desktop/MSU/CIS 663/CIS 663 Project/Generation_per_month.csv")
+data2$date <- as.Date(data2$date, format = "%Y-%m-%d")
+```
+# View Data Head
+```{r}
+head(data)
+head(data2)
+```
+
