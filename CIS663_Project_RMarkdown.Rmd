@@ -1,8 +1,10 @@
 ---
-title: "U.S. Electric Grid"
+title: "U.S. Electric Grid: Will it power the future?"
 author: "Ben Mayes"
 date: "2025-06-01"
-output: html_document
+output:
+  word_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -38,4 +40,186 @@ data2$date <- as.Date(data2$date, format = "%Y-%m-%d")
 head(data)
 head(data2)
 ```
+# Create time series for demand and generation
+```{r}
+data_ts <- ts(data$demand, start = c(2010, 1), frequency = 12)
+data2_ts <- ts(data2$generation, start = c(2010, 1), frequency = 12)
+```
+
+# Plot demand and generation time series
+```{r}
+plot(data_ts, main = "U.S. Electric Grid Generation and Demand", ylab = "Generation(red) / Demand(blue) (TWh)", xlab = "Year", col = "blue", lwd = 2)
+lines(data2_ts, col = "red", lwd = 2)
+```
+
+# View summary of time series
+```{r}
+summary(data_ts)
+summary(data2_ts)
+```
+
+# Acf and Pacf plots for demand and generation
+```{r}
+par(mfrow = c(2, 2))
+acf(data_ts, main = "ACF of Demand")
+acf(data2_ts, main = "ACF of Generation")
+pacf(data_ts, main = "PACF of Demand")
+pacf(data2_ts, main = "PACF of Generation")
+```
+
+# Check for stationarity
+```{r}
+adf_test <- adf.test(data_ts)
+if (adf_test$p.value < 0.05) {
+  print("The time series is stationary.")
+} else {
+  print("The time series is not stationary. Differencing may be required.")
+}
+
+
+adf_test2 <- adf.test(data2_ts)
+if (adf_test2$p.value < 0.05) {
+  print("The time series is stationary.")
+} else {
+  print("The time series is not stationary. Differencing may be required.")
+}
+```
+
+# Train and test split demand data
+```{r}
+train_size <- floor(0.8 * length(data_ts))
+train_data <- window(data_ts, end = c(2019, 12))
+test_data <- window(data_ts, start = c(2020, 1))
+```
+
+# Summary of the training and test data
+```{r}
+summary(train_data)
+summary(test_data)
+```
+
+# Fit ARIMA model
+```{r}
+fit <- auto.arima(train_data)
+```
+
+# View Arima model summary
+```{r}
+summary(fit)
+```
+
+# Check residuals of the fitted model demand
+```{r}
+checkresiduals(fit)
+```
+
+# Forecast using the fitted model for the next 60 months
+```{r}
+forecasted_values <- forecast(fit, h = 120)
+```
+
+# View the forecasted values
+```{r}
+print(forecasted_values)
+```
+
+# Plot the forecast values against the actual test data demand
+```{r}
+plot(forecasted_values, main = "ARIMA Forecast vs Actual Demand", ylab = "Demand Forecast (TWh)", xlab = "Year", col = "blue", lwd = 2)
+lines(test_data, col = "red", lwd = 2)
+```
+
+#Train and fit generation data
+```{r}
+train_size2 <- floor(0.8 * length(data2_ts))
+train_data2 <- window(data2_ts, end = c(2019, 12))
+test_data2 <- window(data2_ts, start = c(2020, 1))
+```
+
+# Summary of the training and test data for generation
+```{r}
+summary(train_data2)
+summary(test_data2)
+```
+
+# Fit ARIMA model for generation data
+```{r}
+fit2 <- auto.arima(train_data2)
+```
+# View ARIMA model summary for generation data
+```{r}
+summary(fit2)
+```
+# Check residuals of the fitted model for generation data
+```{r}
+checkresiduals(fit2)
+```
+
+# Forecast using the fitted model for generation data
+```{r}
+forecasted_values2 <- forecast(fit2, h = 120)
+```
+
+# Plot the forecasted values against the actual test data for generation
+```{r}
+plot(forecasted_values2, main = "ARIMA Forecast vs Actual Generation", ylab = "Generation Forecast (Twh)", xlab = "Year", col = "blue", lwd = 2)
+lines(test_data2, col = "red", lwd = 2)
+```
+
+# Summary of forecasted_values$mean
+```{r}
+print(summary(forecasted_values$mean))
+```
+# Summary of test_data
+```{r}
+print(summary(test_data))
+```
+
+# T-test of forecasted values against actual values demand
+```{r}
+t_test_demand <- t.test(forecasted_values$mean, test_data)
+if (t_test_demand$p.value < 0.05) {
+  print("The forecasted demand values are significantly different from the actual values.")
+} else {
+  print("The forecasted demand values are not significantly different from the actual values.")
+}
+```
+
+# Results of t-test
+```{r}
+print(t_test_demand)
+```
+
+# T-test of forecasted values against actual values for generation
+```{r}
+t_test_generation <- t.test(forecasted_values2$mean, test_data2)
+if (t_test_generation$p.value < 0.05) {
+  print("The forecasted generation values are significantly different from the actual values.")
+} else {
+  print("The forecasted generation values are not significantly different from the actual values.")
+}
+```
+
+# Results of t-test
+```{r}
+print(t_test_generation)
+```
+
+
+# T-Test if predicted values of generation are significantly different from demand
+```{r}
+t_test_comparison <- t.test(forecasted_values$mean, forecasted_values2$mean)
+if (t_test_comparison$p.value < 0.05) {
+  print("The forecasted demand and generation values are significantly different.")
+} else {
+  print("The forecasted demand and generation values are not significantly different.")
+}
+```
+
+# Results of t-test
+```{r}
+print(t_test_comparison)
+```
+
+
 
